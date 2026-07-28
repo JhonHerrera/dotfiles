@@ -1,0 +1,110 @@
+#!/usr/bin/env zsh
+
+emulate -L zsh
+setopt errexit nounset pipefail
+
+config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
+palette_root="$config_root/zsh"
+palette_state="$palette_root/theme"
+herdr_config="${HERDR_CONFIG_PATH:-$config_root/herdr/config.toml}"
+
+show_themes() {
+  local current=classic
+  [[ ! -r $palette_state ]] || IFS= read -r current < "$palette_state"
+  print -r -- "Current theme: $current"
+  print -r -- "Available themes: classic, terminal, catppuccin, tokyo-night,"
+  print -r -- "                  dracula, nord, gruvbox, one-dark"
+}
+
+if (( $# == 0 )) || [[ ${1:-} == --list ]]; then
+  show_themes
+  exit 0
+fi
+
+case $1 in
+  classic)
+    palette=classic
+    herdr_theme=terminal
+    ;;
+  term|terminal)
+    palette=terminal
+    herdr_theme=terminal
+    ;;
+  cat|catppuccin)
+    palette=catppuccin
+    herdr_theme=catppuccin
+    ;;
+  tokyo|tokyonight|tokyo-night)
+    palette=tokyo-night
+    herdr_theme=tokyo-night
+    ;;
+  drac|dracula)
+    palette=dracula
+    herdr_theme=dracula
+    ;;
+  nord)
+    palette=nord
+    herdr_theme=nord
+    ;;
+  gruv|gruvbox)
+    palette=gruvbox
+    herdr_theme=gruvbox
+    ;;
+  one|onedark|one-dark)
+    palette=one-dark
+    herdr_theme=one-dark
+    ;;
+  *)
+    print -u2 -r -- "Unknown theme: $1"
+    show_themes >&2
+    exit 2
+    ;;
+esac
+
+[[ -r "$palette_root/themes/${palette}.p10k.zsh" ]] || {
+  print -u2 -r -- "Missing Powerlevel10k palette: $palette"
+  exit 1
+}
+
+[[ -r $herdr_config ]] || {
+  print -u2 -r -- "Herdr config not found: $herdr_config"
+  exit 1
+}
+
+tmp_config=$(mktemp "${herdr_config}.tmp.XXXXXX")
+tmp_state=$(mktemp "${palette_root}/theme.tmp.XXXXXX")
+trap 'rm -f -- "$tmp_config" "$tmp_state"' EXIT HUP INT TERM
+
+awk -v selected="$herdr_theme" '
+  BEGIN { in_theme = 0; wrote_name = 0 }
+  /^\[theme\][[:space:]]*$/ {
+    in_theme = 1
+    print
+    print "name = \"" selected "\""
+    wrote_name = 1
+    next
+  }
+  /^\[[^]]+\][[:space:]]*$/ { in_theme = 0 }
+  in_theme && /^[[:space:]]*name[[:space:]]*=/ { next }
+  { print }
+  END {
+    if (!wrote_name) {
+      print ""
+      print "[theme]"
+      print "name = \"" selected "\""
+    }
+  }
+' "$herdr_config" >| "$tmp_config"
+
+HERDR_CONFIG_PATH="$tmp_config" command herdr config check >/dev/null
+print -r -- "$palette" >| "$tmp_state"
+
+mv -- "$tmp_config" "$herdr_config"
+mv -- "$tmp_state" "$palette_state"
+trap - EXIT HUP INT TERM
+
+if HERDR_CONFIG_PATH="$herdr_config" command herdr server reload-config >/dev/null 2>&1; then
+  print -r -- "Switched Powerlevel10k and Herdr to $palette."
+else
+  print -r -- "Switched to $palette. Herdr will use it on next launch."
+fi
