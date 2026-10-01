@@ -1,0 +1,24 @@
+# Herdr configuration, managed by dotfiles.
+# Full reference: herdr --default-config
+# The [theme] name is rewritten by theme-switch; change it with that command.
+
+onboarding = false
+
+[theme]
+name = "catppuccin"
+
+# Notify when agents in background workspaces finish or need attention.
+# "herdr" shows in-app toasts, which work reliably under WSL. Use "terminal"
+# or "system" for desktop notifications when the host supports them.
+[ui.toast]
+delivery = "herdr"
+delay_seconds = 1
+
+[ui.toast.herdr]
+position = "bottom-right"
+
+[ui.sound]
+enabled = true
+
+[keys]
+prefix = "ctrl+a"

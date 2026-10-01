@@ -35,7 +35,7 @@ exec zsh
 ```
 
 The installer validates every prerequisite before it writes anything. It
-creates a minimal Herdr config only when one does not exist, sets Oh My Zsh to
+symlinks the managed Herdr config (`dotfiles/herdr/config.toml`), sets Oh My Zsh to
 Powerlevel10k, and adds one marked integration block to `.zshrc`. Existing
 managed targets and `.zshrc` are backed up with timestamps. Re-running the
 installer is safe.
@@ -71,3 +71,18 @@ The theme state is stored at
 `${XDG_CONFIG_HOME:-$HOME/.config}/zsh/theme`. The Herdr config defaults to
 `${XDG_CONFIG_HOME:-$HOME/.config}/herdr/config.toml`; set
 `HERDR_CONFIG_PATH` if it lives elsewhere.
+
+## Herdr config
+
+`dotfiles/herdr/config.toml` is linked to
+`${XDG_CONFIG_HOME:-$HOME/.config}/herdr/config.toml` by the shell-theme
+installer. It turns off onboarding and enables in-app toasts and sounds when
+background agents finish or need attention. Run `herdr --default-config` for
+every available option, then apply edits with:
+
+```sh
+herdr config check && herdr server reload-config
+```
+
+`theme-switch` edits the `[theme]` name in this file through the symlink, so
+switching themes shows up as a change in this repo.

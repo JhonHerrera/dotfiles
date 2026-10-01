@@ -75,15 +75,12 @@ require_command awk
 require_file "Oh My Zsh" "$OH_MY_ZSH_DIR/oh-my-zsh.sh"
 require_file "Powerlevel10k" "$POWERLEVEL10K_DIR/powerlevel10k.zsh-theme"
 
-if [ -r "$HERDR_CONFIG_PATH" ]; then
-  if HERDR_CONFIG_PATH="$HERDR_CONFIG_PATH" herdr config check >/dev/null 2>&1; then
-    printf '  ok  Herdr config: %s\n' "$HERDR_CONFIG_PATH"
-  else
-    printf '  invalid  Herdr config: %s\n' "$HERDR_CONFIG_PATH" >&2
-    failures=$((failures + 1))
-  fi
+HERDR_SOURCE="$SOURCE_ROOT/herdr/config.toml"
+if HERDR_CONFIG_PATH="$HERDR_SOURCE" herdr config check >/dev/null 2>&1; then
+  printf '  ok  Herdr config: %s\n' "$HERDR_SOURCE"
 else
-  printf '  new  Herdr config will be created: %s\n' "$HERDR_CONFIG_PATH"
+  printf '  invalid  Herdr config: %s\n' "$HERDR_SOURCE" >&2
+  failures=$((failures + 1))
 fi
 
 if [ -r "$ZSHRC" ]; then
@@ -161,14 +158,7 @@ for source_file in "$SOURCE_ROOT"/zsh/themes/*.p10k.zsh; do
   link_managed_file "$source_file" "$CONFIG_ROOT/zsh/themes/$(basename -- "$source_file")"
 done
 
-if [ ! -e "$HERDR_CONFIG_PATH" ]; then
-  {
-    printf '# Created by the dotfiles shell-theme installer.\n'
-    printf '[theme]\n'
-    printf 'name = "terminal"\n'
-  } >"$HERDR_CONFIG_PATH"
-  printf '  create  %s\n' "$HERDR_CONFIG_PATH"
-fi
+link_managed_file "$HERDR_SOURCE" "$HERDR_CONFIG_PATH"
 
 zshrc_was_new=false
 if [ ! -e "$ZSHRC" ]; then

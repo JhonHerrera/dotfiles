@@ -7,6 +7,8 @@ config_root="${XDG_CONFIG_HOME:-$HOME/.config}"
 palette_root="$config_root/zsh"
 palette_state="$palette_root/theme"
 herdr_config="${HERDR_CONFIG_PATH:-$config_root/herdr/config.toml}"
+# Edit the symlink target in place so the managed link is never replaced.
+herdr_config=${herdr_config:A}
 
 show_themes() {
   local current=classic
