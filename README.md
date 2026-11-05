@@ -86,3 +86,51 @@ herdr config check && herdr server reload-config
 
 `theme-switch` edits the `[theme]` name in this file through the symlink, so
 switching themes shows up as a change in this repo.
+
+## Pi user-message design
+
+The `prompt-blue` theme and rounded user-message outline are saved in
+`dotfiles/pi/`. Messages have a rounded border, light text, and no background
+fill. At widths below three columns, the border is omitted so text still fits.
+
+This setup requires Node.js 22.19+ and an npm installation of
+`@earendil-works/pi-coding-agent` on Linux, macOS, or WSL. It was tested with
+Pi 1.5.0. Check what would change without writing any files:
+
+```sh
+node scripts/install-pi-design.mjs --check
+```
+
+Install or restore the design, then check the actual installed renderer:
+
+```sh
+node scripts/install-pi-design.mjs
+node scripts/check-pi-design.mjs
+```
+
+Restart Pi after installing. Use `pi -c` in your working directory to continue
+the previous session.
+
+The installer copies the theme, selects `prompt-blue`, and patches Pi's
+installed user-message renderer. Other settings stay unchanged. Every changed
+existing file gets a timestamped `.before-outline-...` backup beside it.
+Running the installer again leaves identical files alone. Credentials, session
+history, and machine-specific settings are not stored in this repository.
+
+Pi updates can replace the renderer. Run the installer again after updating.
+The patch locates bundle files by their contents instead of keeping filenames
+that change with each release. It refuses unfamiliar renderer code before
+writing anything. If an update changes that code, review
+`dotfiles/pi/outline-patch.mjs` before adapting it. The theme alone cannot add
+the rounded outline.
+
+By default, the installer finds Pi on `PATH` and uses `~/.pi/agent`, or
+`PI_CODING_AGENT_DIR` when set. Both scripts accept `--pi-root PATH` to select
+an installation. The installer also accepts `--agent-dir PATH` for a different
+configuration directory.
+
+Run the focused patch and installer tests:
+
+```sh
+node --test tests/pi-design.test.mjs
+```
